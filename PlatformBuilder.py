@@ -7,14 +7,9 @@ class Platform:
     _GREEN = (0, 255, 0)
     _COLORS = (_RED, _GREEN)
 
-    def __init__(self,surface,position):
+    def __init__(self, surface, yPos):
         color = random.choice(self._COLORS)
-        width = 150
-        if position=="UP":
-            Y = 100
-        else:
-            Y = 200
-        platform = draw.rect(surface, color, (800, Y, width, 20))
+        width = 200
+        platform = draw.rect(surface, color, (800, yPos, width, 50))
         self.color = color
         self.rect = platform
-
