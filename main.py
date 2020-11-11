@@ -3,7 +3,7 @@ import gameConstants as const
 from collections import deque
 import pygame as pyg
 from PlatformBuilder import Platform
-
+import random
 pyg.init()
 # Surfaces
 screen = pyg.display.set_mode((800, 600))
@@ -23,14 +23,15 @@ gameActive = True
 
 
 def createPlatforms():
+    colors = random.sample(const.COLORS,2)
     if len(platforms) == 0:
-        platformBottom = Platform(platform_spawn_area, player.bottomleft[1] + player.height)
-        platformTop = Platform(platform_spawn_area, player.topleft[1] - player.height * 2)
+        platformBottom = Platform(platform_spawn_area, colors[0],player.bottomleft[1] + player.height)
+        platformTop = Platform(platform_spawn_area, colors[1],player.topleft[1] - player.height * 2)
         platforms.append(platformTop)
         platforms.append(platformBottom)
     if platforms[-1].rect.right < 800:
-        platformBottom = Platform(platform_spawn_area, player.bottomleft[1] + player.height)
-        platformTop = Platform(platform_spawn_area, player.topleft[1] - player.height * 2)
+        platformBottom = Platform(platform_spawn_area,colors[0], player.bottomleft[1] + player.height)
+        platformTop = Platform(platform_spawn_area, colors[1],player.topleft[1] - player.height * 2 )
         platforms.append(platformTop)
         platforms.append(platformBottom)
 
@@ -95,8 +96,13 @@ def detectCollision():
             return False
     return True
 
-
-# TODO: PREJAKA IDEJA, namesto da odish na platformata, vlezi vo nea, kako vo tunel, zelen crven
+def checkIfOnCorrectPlatform():
+    global gameActive
+    for platform in platforms:
+        if platform.rect.left < player.right < platform.rect.right and player.bottom == platform.rect.top:
+            if platform.color == const.RED:
+                gameActive = False
+#TODO: PREJAKA IDEJA, namesto da odish na platformata, vlezi vo nea, kako vo tunel, zelen crven
 while True:
     for event in pyg.event.get():
         if event.type == pyg.QUIT:
@@ -123,6 +129,7 @@ while True:
         if goingDOWN:
             findClosestPlatform(direction='DOWN')
         gameActive = detectCollision()
+        checkIfOnCorrectPlatform()
         drawPlatforms()
         player = pyg.draw.rect(platform_spawn_area, (0, 0, 250), player)
         screen.blit(platform_spawn_area, (0, 0))
