@@ -4,6 +4,7 @@ from collections import deque
 import pygame as pyg
 from PlatformBuilder import Platform
 import random
+
 pyg.init()
 # Surfaces
 screen = pyg.display.set_mode((800, 600))
@@ -19,21 +20,16 @@ goingUP = False
 goingDOWN = False
 movingPlatforms = None
 movingPlatformSpeed = 1
-gameActive = True
+gameActive = False
+font = pyg.font.Font(pyg.font.get_default_font(), 80)
 
 
 def createPlatforms():
-    colors = random.sample(const.COLORS,2)
-    if len(platforms) == 0:
-        platformBottom = Platform(platform_spawn_area, colors[0],player.bottomleft[1] + player.height)
-        platformTop = Platform(platform_spawn_area, colors[1],player.topleft[1] - player.height * 2)
-        platforms.append(platformTop)
-        platforms.append(platformBottom)
-    if platforms[-1].rect.right < 800:
-        platformBottom = Platform(platform_spawn_area,colors[0], player.bottomleft[1] + player.height)
-        platformTop = Platform(platform_spawn_area, colors[1],player.topleft[1] - player.height * 2 )
-        platforms.append(platformTop)
-        platforms.append(platformBottom)
+    colors = random.sample(const.COLORS, 2)
+    platformBottom = Platform(platform_spawn_area, colors[0], player.bottom + player.height * 1.6)
+    platformTop = Platform(platform_spawn_area, colors[1], player.top - player.height * 1.6)
+    platforms.append(platformTop)
+    platforms.append(platformBottom)
 
 
 def movePlatforms():
@@ -58,19 +54,19 @@ def movePlatform(platforms, direction):
     for platform in platforms:
 
         if direction == 'UP':
-            if platforms[0].rect.y < player.bottom:
+            if platforms[0].rect.bottom < player.top:
                 platform.rect.move_ip(0, movingPlatformSpeed)
             else:
-                platforms[0].rect.y = player.bottom
+                platforms[0].rect.bottom = player.top + 1
                 movingPlatformSpeed = 1
                 movingPlatforms = None
                 goingUP = False
                 goingDOWN = False
         else:
-            if platforms[1].rect.y > player.bottom:
+            if platforms[1].rect.top > player.bottom:
                 platform.rect.move_ip(0, movingPlatformSpeed)
             else:
-                platforms[1].rect.y = player.bottom
+                platforms[1].rect.top = player.bottom - 1
                 movingPlatformSpeed = 1
                 movingPlatforms = None
                 goingUP = False
@@ -90,20 +86,36 @@ def findClosestPlatform(direction):
                 break
 
 
+def homeScreen(mousePos, pressedButtons):
+    global screen, font, gameActive
+    gameTitleSurf = font.render("Eternal Cube", True, (150, 150, 150), const.BLACK)
+    gameTitleRect = gameTitleSurf.get_rect()
+    gameTitleRect.midbottom = (const.WINDOW_WIDTH / 2, const.WINDOW_HEIGHT / 3)
+    startSurf = font.render("START", True, const.BLUE, const.BLACK)
+    startSurfRect = startSurf.get_rect()
+    startSurfRect.center = (const.WINDOW_WIDTH / 2, const.WINDOW_HEIGHT - const.WINDOW_HEIGHT / 3)
+    # creating hover animation on Start button
+    if startSurfRect.collidepoint(mousePos):
+        startSurf = font.render("START", True, const.BLUE, (150, 150, 150))
+        # starting the game when left clicking
+        if pressedButtons[0]:
+            gameActive = True
+    screen.blits(((gameTitleSurf, gameTitleRect, None), (startSurf, startSurfRect, None)))
+
+
 def detectCollision():
     for platform in platforms:
-        if platform.rect.colliderect(player):
+        if platform.rect.colliderect(player) and platform.color == const.RED:
             return False
     return True
 
-def checkIfOnCorrectPlatform():
-    global gameActive
-    for platform in platforms:
-        if platform.rect.left < player.right < platform.rect.right and player.bottom == platform.rect.top:
-            if platform.color == const.RED:
-                gameActive = False
-#TODO: PREJAKA IDEJA, namesto da odish na platformata, vlezi vo nea, kako vo tunel, zelen crven
+
 while True:
+
+    # TODO: PREJAKA IDEJA, namesto da odish na platformata, vlezi vo nea, kako vo tunel, zelen crven
+    # TODO: ne se oslonuvaj kreiranje na platformi vremenski na odredeni intervali, deka ako korisnikot ima mal fps
+    #  ke bidat nabutani tuku kreiraj koga vishe ednata platforma ke bide vo odredena lokacija na ekranot
+
     for event in pyg.event.get():
         if event.type == pyg.QUIT:
             pyg.quit()
@@ -121,6 +133,7 @@ while True:
                 platforms.clear()
                 gameActive = True
 
+    homeScreen(pyg.mouse.get_pos(), pyg.mouse.get_pressed())
     if gameActive:
         platform_spawn_area.fill((0, 0, 0))
         movePlatforms()
@@ -129,11 +142,11 @@ while True:
         if goingDOWN:
             findClosestPlatform(direction='DOWN')
         gameActive = detectCollision()
-        checkIfOnCorrectPlatform()
         drawPlatforms()
         player = pyg.draw.rect(platform_spawn_area, (0, 0, 250), player)
         screen.blit(platform_spawn_area, (0, 0))
 
-        pyg.display.update()
-        clock.tick(60)
+    pyg.display.update()
+    clock.tick(60)
+
 pyg.quit()
