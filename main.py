@@ -15,11 +15,13 @@ player = pyg.draw.rect(platform_spawn_area, (0, 0, 250), (50, const.WINDOW_HEIGH
 # Events ( USER event IDs should be between 24 and 32 )
 SPAWN_NEW_PLATFORMS = 24
 UPDATE_SCORE = 25
+INCREASE_SPEED = 26
 
 # Variables
 platforms = deque([], 10)
 pyg.time.set_timer(SPAWN_NEW_PLATFORMS, 1500)
 pyg.time.set_timer(UPDATE_SCORE, 1000)
+pyg.time.set_timer(INCREASE_SPEED, 5000)
 clock = pyg.time.Clock()
 goingUP = False
 goingDOWN = False
@@ -30,6 +32,7 @@ homeScreenFont = pyg.font.Font(pyg.font.get_default_font(), 80)
 scoreFont = pyg.font.Font(pyg.font.get_default_font(), 35)
 highScore = 0
 score = 0
+PLATFORM_SPEED = -5
 
 
 def updateScore():
@@ -38,13 +41,14 @@ def updateScore():
 
 
 def reinitializeVariables():
-    global platforms, goingUP, goingDOWN, closestPlatforms, platformSpeed, gameActive, score
+    global platforms, goingUP, goingDOWN, closestPlatforms, platformSpeed, gameActive, score, PLATFORM_SPEED
     platforms.clear()
     goingUP = False
     goingDOWN = False
     closestPlatforms = None
     platformSpeed = 1
     score = 0
+    PLATFORM_SPEED = -5
 
 
 def createPlatforms():
@@ -56,8 +60,9 @@ def createPlatforms():
 
 
 def movePlatforms():
+    global PLATFORM_SPEED
     for platform in platforms:
-        platform.rect.move_ip(-5, 0)
+        platform.rect.move_ip(PLATFORM_SPEED, 0)
 
 
 def drawPlatforms():
@@ -97,8 +102,8 @@ def moveClosestPlatforms(platforms, direction):
 
 
 def checkIfPlayerMoved():
-    global closestPlatforms
-    if closestPlatforms is not None and closestPlatforms[0].rect.left < player.right:
+    global closestPlatforms, platforms
+    if closestPlatforms is not None and closestPlatforms[0].rect.left < player.right < closestPlatforms[0].rect.right:
         if closestPlatforms[0].rect.colliderect(player) or closestPlatforms[1].rect.colliderect(player):
             return True
         return False
@@ -130,7 +135,7 @@ def homeScreen(mousePos, pressedButtons):
     startSurf = homeScreenFont.render("START", True, const.BLUE, const.BLACK).convert()
     startSurfRect = startSurf.get_rect()
     startSurfRect.center = (const.WINDOW_WIDTH / 2, const.WINDOW_HEIGHT - const.WINDOW_HEIGHT / 3)
-    # creating hover animation on Start button
+    # Creating hover animation on Start button
     if startSurfRect.collidepoint(mousePos) and not gameActive:
         startSurf = homeScreenFont.render("START", True, const.BLUE, (150, 150, 150)).convert()
         # starting the game when left clicking
@@ -140,8 +145,8 @@ def homeScreen(mousePos, pressedButtons):
     updateHighScore()
     highScoreSurf = scoreFont.render("High Score %s" % highScore, True, const.WHITE, const.BLACK).convert()
     highScoreRect = highScoreSurf.get_rect()
-
-    screen.blits(((gameTitleSurf, gameTitleRect, None), (startSurf, startSurfRect, None),(highScoreSurf, highScoreRect, None)))
+    screen.blits(
+        ((gameTitleSurf, gameTitleRect, None), (startSurf, startSurfRect, None), (highScoreSurf, highScoreRect, None)))
 
 
 def updateHighScore():
@@ -166,19 +171,21 @@ while True:
         if event.type == pyg.QUIT:
             pyg.quit()
             sys.exit()
-        if event.type == SPAWN_NEW_PLATFORMS:
-            createPlatforms()
-        if event.type == pyg.KEYDOWN:
-            # Remember, we are moving the platforms not the player, goingUP will bring the platforms down,
-            # and vice versa
-            if event.key == pyg.K_UP:
-                goingUP = True
-            if event.key == pyg.K_DOWN:
-                goingDOWN = True
-        if event.type == UPDATE_SCORE and gameActive:
-            updateScore()
+        if gameActive:
+            if event.type == SPAWN_NEW_PLATFORMS:
+                createPlatforms()
+            if event.type == pyg.KEYDOWN:
+                # Remember, we are moving the platforms not the player, goingUP will bring the platforms down,
+                # and vice versa
+                if event.key == pyg.K_UP:
+                    goingUP = True
+                if event.key == pyg.K_DOWN:
+                    goingDOWN = True
+            if event.type == UPDATE_SCORE:
+                updateScore()
+            if event.type == INCREASE_SPEED:
+                PLATFORM_SPEED -= 2
 
-    homeScreen(pyg.mouse.get_pos(), pyg.mouse.get_pressed())
     if gameActive:
         platform_spawn_area.fill((0, 0, 0))
         movePlatforms()
@@ -187,16 +194,16 @@ while True:
             moveClosestPlatforms(closestPlatforms, direction='UP')
         if goingDOWN and closestPlatforms:
             moveClosestPlatforms(closestPlatforms, direction='DOWN')
-        if goingUP is not True and goingDOWN is not True:
+        if goingUP is False and goingDOWN is False:
             gameActive = checkIfPlayerMoved()
-            if detectCollisionWithRed() is True:
-                gameActive = False
+        if detectCollisionWithRed() is True:
+            gameActive = False
         drawPlatforms()
         player = pyg.draw.rect(platform_spawn_area, (0, 0, 250), player)
         renderScore()
         screen.blit(platform_spawn_area, (0, 0))
-
-
+    else:
+        homeScreen(pyg.mouse.get_pos(), pyg.mouse.get_pressed())
     pyg.display.update()
     clock.tick(60)
 
