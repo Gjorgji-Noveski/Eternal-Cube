@@ -21,15 +21,17 @@ INCREASE_SPEED = 26
 platforms = deque([], 10)
 pyg.time.set_timer(SPAWN_NEW_PLATFORMS, 1500)
 pyg.time.set_timer(UPDATE_SCORE, 1000)
-pyg.time.set_timer(INCREASE_SPEED, 5000)
+pyg.time.set_timer(INCREASE_SPEED, 6000)
 clock = pyg.time.Clock()
 goingUP = False
 goingDOWN = False
 closestPlatforms = None
 platformSpeed = 1
 gameActive = False
-homeScreenFont = pyg.font.Font(pyg.font.get_default_font(), 80)
+crashed = False
+titleFont = pyg.font.Font(pyg.font.get_default_font(), 80)
 scoreFont = pyg.font.Font(pyg.font.get_default_font(), 35)
+textFont = pyg.font.Font(pyg.font.get_default_font(), 60)
 highScore = 0
 score = 0
 PLATFORM_SPEED = -5
@@ -41,10 +43,11 @@ def updateScore():
 
 
 def reinitializeVariables():
-    global platforms, goingUP, goingDOWN, closestPlatforms, platformSpeed, gameActive, score, PLATFORM_SPEED
+    global platforms, goingUP, goingDOWN, closestPlatforms, platformSpeed, gameActive, score, PLATFORM_SPEED, crashed
     platforms.clear()
     goingUP = False
     goingDOWN = False
+    crashed = False
     closestPlatforms = None
     platformSpeed = 1
     score = 0
@@ -128,16 +131,16 @@ def renderScore():
 
 
 def homeScreen(mousePos, pressedButtons):
-    global screen, homeScreenFont, gameActive, scoreFont, highScore
-    gameTitleSurf = homeScreenFont.render("Eternal Cube", True, (150, 150, 150), const.BLACK).convert()
+    global screen, titleFont, gameActive, scoreFont, highScore
+    gameTitleSurf = titleFont.render("Eternal Cube", True, (150, 150, 150), const.BLACK).convert()
     gameTitleRect = gameTitleSurf.get_rect()
     gameTitleRect.midbottom = (const.WINDOW_WIDTH / 2, const.WINDOW_HEIGHT / 3)
-    startSurf = homeScreenFont.render("START", True, const.BLUE, const.BLACK).convert()
+    startSurf = titleFont.render("START", True, const.BLUE, const.BLACK).convert()
     startSurfRect = startSurf.get_rect()
     startSurfRect.center = (const.WINDOW_WIDTH / 2, const.WINDOW_HEIGHT - const.WINDOW_HEIGHT / 3)
     # Creating hover animation on Start button
     if startSurfRect.collidepoint(mousePos) and not gameActive:
-        startSurf = homeScreenFont.render("START", True, const.BLUE, (150, 150, 150)).convert()
+        startSurf = titleFont.render("START", True, const.BLUE, (150, 150, 150)).convert()
         # starting the game when left clicking
         if pressedButtons[0]:
             reinitializeVariables()
@@ -147,6 +150,31 @@ def homeScreen(mousePos, pressedButtons):
     highScoreRect = highScoreSurf.get_rect()
     screen.blits(
         ((gameTitleSurf, gameTitleRect, None), (startSurf, startSurfRect, None), (highScoreSurf, highScoreRect, None)))
+
+
+def deathScreen(mousePos, pressedButtons):
+    global screen, textFont, gameActive, titleFont
+    deathTextSurf = titleFont.render("You crashed :(", True, const.RED, const.BLACK).convert()
+    deathTextRect = deathTextSurf.get_rect()
+    deathTextRect.midbottom = (int(const.WINDOW_WIDTH / 2), int(const.WINDOW_HEIGHT / 3))
+    retryTextSurf = textFont.render("Retry", True, const.BLUE, const.BLACK).convert()
+    retryTextRect = retryTextSurf.get_rect()
+    retryTextRect.center = (int(const.WINDOW_WIDTH / 2), int(const.WINDOW_HEIGHT / 2))
+    homeTextSurf = textFont.render("Main menu", True, const.BLUE, const.BLACK).convert()
+    homeTextRect = homeTextSurf.get_rect()
+    homeTextRect.midtop = (int(const.WINDOW_WIDTH / 2), int(const.WINDOW_HEIGHT - const.WINDOW_HEIGHT / 3))
+    if retryTextRect.collidepoint(mousePos) and not gameActive:
+        retryTextSurf = textFont.render("Retry", True, const.BLUE, (150, 150, 150)).convert()
+        # starting the game when left clicking
+        if pressedButtons[0]:
+            reinitializeVariables()
+            gameActive = True
+    if homeTextRect.collidepoint(mousePos) and not gameActive:
+        homeTextSurf = textFont.render("Main menu", True, const.BLUE, (150, 150, 150)).convert()
+        if pressedButtons[0]:
+            reinitializeVariables()
+            gameActive = False
+    screen.blits(((deathTextSurf, deathTextRect, None), (retryTextSurf, retryTextRect, None), (homeTextSurf, homeTextRect, None)))
 
 
 def updateHighScore():
@@ -186,7 +214,9 @@ while True:
             if event.type == INCREASE_SPEED:
                 PLATFORM_SPEED -= 2
 
-    if gameActive:
+    if not gameActive and crashed:
+        deathScreen(pyg.mouse.get_pos(), pyg.mouse.get_pressed())
+    elif gameActive:
         platform_spawn_area.fill((0, 0, 0))
         movePlatforms()
         findClosestPlatform()
@@ -201,6 +231,8 @@ while True:
         drawPlatforms()
         player = pyg.draw.rect(platform_spawn_area, (0, 0, 250), player)
         renderScore()
+        if not gameActive:
+            crashed = True
         screen.blit(platform_spawn_area, (0, 0))
     else:
         homeScreen(pyg.mouse.get_pos(), pyg.mouse.get_pressed())
