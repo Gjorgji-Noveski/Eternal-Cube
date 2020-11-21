@@ -273,7 +273,6 @@ while True:
                     if tutorialTextRect.collidepoint(pyg.mouse.get_pos()):
                         tutorialScreen()
                         howToPlay = True
-                        print("DA")
 
     if not gameActive and crashed:
         deathScreen()
