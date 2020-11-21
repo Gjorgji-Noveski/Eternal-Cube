@@ -228,9 +228,6 @@ def detectCollisionWithRed():
 
 makeExplanationTextSurfs()
 while True:
-    # TODO: PREJAKA IDEJA, namesto da odish na platformata, vlezi vo nea, kako vo tunel, zelen crven
-    # TODO: ne se oslonuvaj kreiranje na platformi vremenski na odredeni intervali, deka ako korisnikot ima mal fps
-    #  ke bidat nabutani tuku kreiraj koga vishe ednata platforma ke bide vo odredena lokacija na ekranot
     for event in pyg.event.get():
         if event.type == pyg.QUIT:
             pyg.quit()
