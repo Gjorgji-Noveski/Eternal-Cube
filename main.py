@@ -4,14 +4,12 @@ from collections import deque
 import pygame as pyg
 from PlatformBuilder import Platform
 import random
-import time
-
 pyg.init()
 
-# Events ( USER event IDs should be between 24 and 32 )
-SPAWN_NEW_PLATFORMS = 24
-UPDATE_SCORE = 25
-INCREASE_SPEED = 26
+# Events
+SPAWN_NEW_PLATFORMS = pyg.event.custom_type()
+UPDATE_SCORE = pyg.event.custom_type()
+INCREASE_SPEED = pyg.event.custom_type()
 
 # Variables
 platforms = deque([], 10)
@@ -155,7 +153,7 @@ def checkIfPlayerMoved():
 # Looking for platforms that are the closest to the cube
 def findClosestPlatform():
     global closestPlatforms, platforms
-    for idx, platform in enumerate(platforms):  # OVDE GI IMA I GORNATA I DOLNATA PLATFORMA
+    for idx, platform in enumerate(platforms):  # Both platforms are present here
         if platform.rect.right > player.right:
             closestPlatforms = [platform, platforms[idx + 1]]
             break
@@ -180,7 +178,7 @@ def homeScreen():
         screen.blit(tutorialTextSurfHovered, tutorialTextRect)
     else:
         screen.blit(tutorialTextSurf, tutorialTextRect)
-    highScoreSurf = scoreFont.render("High Score %s" % highScore, True, const.WHITE, const.BLACK).convert()
+    highScoreSurf = scoreFont.render("High Score: %s" % highScore, True, const.WHITE, const.BLACK).convert()
     screen.blits(((gameTitleSurf, gameTitleRect, None), (highScoreSurf, highScoreRect, None)))
 
 
