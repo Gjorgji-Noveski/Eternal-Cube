@@ -1,11 +1,13 @@
 import sys
+import os
 import gameConstants as const
 from collections import deque
 import pygame as pyg
 from PlatformBuilder import Platform
 import random
+os.environ['SDL_VIDEO_CENTERED '] = '1'
 pyg.init()
-
+pyg.display.set_caption('Eternal Cube')
 # Events
 SPAWN_NEW_PLATFORMS = pyg.event.custom_type()
 UPDATE_SCORE = pyg.event.custom_type()
